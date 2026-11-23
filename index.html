@@ -446,6 +446,14 @@ body.paused .ill *{animation:none!important;opacity:1!important;stroke-dashoffse
 
 .grid .card,.psy-grid .pcard{content-visibility:auto;contain-intrinsic-size:auto 320px}
 
+.card.sk{cursor:default;pointer-events:none}
+.card.sk .pv,.card.sk i{background:linear-gradient(90deg,var(--color-bg-surface-sunken) 30%,var(--color-action-neutral-hover) 50%,var(--color-bg-surface-sunken) 70%);background-size:200% 100%;animation:skelShim 1.4s linear infinite}
+.card.sk i{display:block;height:12px;border-radius:6px;margin-top:6px}
+.card.sk i:first-child{width:60%;height:16px;margin-top:0}
+.card.sk i:nth-child(2){width:40%}
+.card.sk i:last-child{width:75%;margin-top:18px}
+@media (prefers-reduced-motion: reduce){.card.sk .pv,.card.sk i{animation:none}}
+
 /* Paused = still "poster" frame (fully visible). Off-screen = paused where it is. Hover/focus a card = live. */
 body.paused .grid .card:not(.live) .pv *{animation:none!important;opacity:1!important;filter:none!important}
 .grid .pv.off *{animation-play-state:paused!important}
@@ -495,7 +503,7 @@ body.paused .grid .card:not(.live) .pv *{animation:none!important;opacity:1!impo
           <button type="button" class="pauselink" id="pauseLink" aria-pressed="false">Pause animations</button>
           <div class="applied" id="applied"></div>
         </div>
-        <div class="grid" id="grid"></div>
+        <div class="grid" id="grid"><div class="card sk" aria-hidden="true"><div class="pv"></div><div class="body"><i></i><i></i><i></i></div></div><div class="card sk" aria-hidden="true"><div class="pv"></div><div class="body"><i></i><i></i><i></i></div></div><div class="card sk" aria-hidden="true"><div class="pv"></div><div class="body"><i></i><i></i><i></i></div></div><div class="card sk" aria-hidden="true"><div class="pv"></div><div class="body"><i></i><i></i><i></i></div></div><div class="card sk" aria-hidden="true"><div class="pv"></div><div class="body"><i></i><i></i><i></i></div></div><div class="card sk" aria-hidden="true"><div class="pv"></div><div class="body"><i></i><i></i><i></i></div></div></div>
       </section>
     </div>
   </div>
@@ -837,8 +845,14 @@ function renderGrid(){
   const n=activeCount();$('#fbadge').hidden=!n;$('#fbadge').textContent=n;
   $('#sheetApply').textContent='Show '+list.length+' results';
   if(!list.length){g.innerHTML='<div class="empty"><strong>No animations match these filters.</strong><span>Remove a filter or try another word.</span><button class="btn" type="button" id="emptyClear">Clear filters</button></div>';$('#emptyClear').onclick=clearAll;return}
+  gridList=list;gridShown=0;appendBatch();
+}
+const BATCH=12;let gridList=[],gridShown=0,moreIO;
+const SKEL='<div class="card sk" aria-hidden="true"><div class="pv"></div><div class="body"><i></i><i></i><i></i></div></div>';
+function appendBatch(){
+  const g=$('#grid');const old=g.querySelector('.sk-more');if(old)old.remove();
   const bcls={'Loop':'loop','Once':'once','On interaction':'int'};
-  list.forEach(a=>{
+  gridList.slice(gridShown,gridShown+BATCH).forEach(a=>{
     const ti=techIndex(a);
     const c=document.createElement('button');c.type='button';c.className='card';c.setAttribute('aria-label',a.name+', from '+a.src+'. Open details');
     c.innerHTML='<div class="pv">'+a.demo+(a.approx?'<span class="approx">approx.</span>':'')+'</div><div class="body"><h3>'+esc(a.name)+'</h3><div class="src">'+esc(a.src)+'</div><div class="tags">'+a.plat.map(p=>'<span class="tag'+(p==='App'?' app':'')+'">'+p+'</span>').join('')+'<span class="tag '+bcls[a.beh]+'">'+a.beh+'</span>'+(a.beta?'<span class="tag beta">Beta</span>':'')+'</div><div class="stacks">'+(state.f.tech.size&&ti>0?'<span class="incl">Includes '+esc(a.stacks[ti].label)+' version</span>':a.stacks.length>1?a.stacks.length+' stacks: '+a.stacks.map(s=>s.label.replace(/ \(.+\)/,'')).slice(0,4).join(', ')+(a.stacks.length>4?'…':''):esc(a.stacks[0].label.replace(/ \(.+\)/,'')))+'</div></div>';
@@ -846,9 +860,16 @@ function renderGrid(){
     c.onmouseenter=c.onfocus=()=>c.classList.add('live');
     c.onmouseleave=c.onblur=()=>c.classList.remove('live');
     g.appendChild(c);
+    if(io)io.observe(c.querySelector('.pv'));
   });
-  if('IntersectionObserver' in window){io&&io.disconnect();io=new IntersectionObserver(es=>es.forEach(e=>e.target.classList.toggle('off',!e.isIntersecting)),{rootMargin:'100px'});g.querySelectorAll('.pv').forEach(p=>io.observe(p))}
+  gridShown=Math.min(gridShown+BATCH,gridList.length);
+  if(gridShown<gridList.length){
+    const more=document.createElement('div');more.className='sk-more';more.style.display='contents';more.innerHTML=SKEL+SKEL+SKEL;g.appendChild(more);
+    if('IntersectionObserver' in window){moreIO&&moreIO.disconnect();moreIO=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){moreIO.disconnect();requestAnimationFrame(appendBatch)}},{rootMargin:'400px'});moreIO.observe(more.firstElementChild)}
+    else appendBatch();
+  }
 }
+if('IntersectionObserver' in window)io=new IntersectionObserver(es=>es.forEach(e=>e.target.classList.toggle('off',!e.isIntersecting)),{rootMargin:'100px'});
 function update(){
   const fid=document.activeElement&&document.activeElement.id;const wasSide=fid&&fid.startsWith('s-');
   renderCats();renderFacets($('#facetsSide'),'s-');renderFacets($('#facetsSheet'),'m-');renderApplied();renderGrid();
