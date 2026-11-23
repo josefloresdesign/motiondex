@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="128" height="128" role="img" aria-label="Motiondex">
+  <rect width="32" height="32" rx="9" fill="#7d49f8"/>
+  <path d="M8 23C15 23 14.5 9 23.5 9" fill="none" stroke="#ffffff" stroke-opacity=".5" stroke-width="2.6" stroke-linecap="round"/>
+  <circle cx="23.5" cy="9" r="3.4" fill="#ffffff"/>
+</svg>
