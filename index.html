@@ -444,6 +444,8 @@ body.paused .ill *{animation:none!important;opacity:1!important;stroke-dashoffse
 .law .close{position:absolute;top:14px;right:14px;background:var(--color-bg-surface)}
 .law .box{position:relative}
 
+.grid .card,.psy-grid .pcard{content-visibility:auto;contain-intrinsic-size:auto 320px}
+
 /* Paused = still "poster" frame (fully visible). Off-screen = paused where it is. Hover/focus a card = live. */
 body.paused .grid .card:not(.live) .pv *{animation:none!important;opacity:1!important;filter:none!important}
 .grid .pv.off *{animation-play-state:paused!important}
@@ -484,7 +486,6 @@ body.paused .grid .card:not(.live) .pv *{animation:none!important;opacity:1!impo
       <section aria-labelledby="resTitle" id="results">
         <h2 class="sr" id="resTitle">Results</h2>
         <div class="pausenote" id="orignote" hidden style="background:var(--color-bg-warning-subtle)"><span><span class="beta">Beta</span>&nbsp; Animations we made ourselves, so they aren't repeats of anything else here. Free to use under MIT.</span></div>
-        <div class="pausenote" id="pausenote" hidden><span>Animations are paused so they don't make you dizzy. Hover or open a card to see it move.</span><button type="button" id="resumeInline">Play all</button></div>
         <div class="toolbar">
           <button class="btn sm filterbtn" id="openSheet" aria-haspopup="dialog">Filters <span class="badge" id="fbadge" hidden>0</span></button>
           <span class="count" id="count" aria-live="polite"></span>
@@ -904,10 +905,9 @@ $('#closeSheet').onclick=closeAll;$('#sheetApply').onclick=closeAll;
 $('#sheetClear').onclick=()=>{Object.values(state.f).forEach(s=>s.clear());update()};
 
 /* ===== Pause ===== */
-function setPaused(p){document.body.classList.toggle('paused',p);$('#pauseLink').setAttribute('aria-pressed',p);$('#pauseLink').textContent=p?'Play animations':'Pause animations';$('#pausenote').hidden=!p;try{localStorage.setItem('mdx-paused',p?'1':'0')}catch(e){}}
-$('#resumeInline').onclick=()=>setPaused(false);
-$('#pauseLink').onclick=()=>setPaused(!document.body.classList.contains('paused'));
-(function(){let p=matchMedia('(prefers-reduced-motion: reduce)').matches;try{const v=localStorage.getItem('mdx-paused');if(v!==null)p=v==='1'}catch(e){}setPaused(p)})();
+function setPaused(p){document.body.classList.toggle('paused',p);$('#pauseLink').setAttribute('aria-pressed',p);$('#pauseLink').textContent=p?'Play animations':'Pause animations';}
+$('#pauseLink').onclick=()=>{const p=!document.body.classList.contains('paused');setPaused(p);try{localStorage.setItem('mdx-pause-choice',p?'1':'0')}catch(e){}};
+(function(){let p=false;try{p=localStorage.getItem('mdx-pause-choice')==='1'}catch(e){}setPaused(p)})();
 
 /* ===== Sources ===== */
 SOURCES.forEach(([n,u,p,w,h,l])=>{const tr=document.createElement('tr');tr.innerHTML='<td><a target="_blank" rel="noopener" href="'+esc(u)+'">'+esc(n)+' ↗</a></td><td>'+esc(p)+'</td><td>'+esc(w)+'</td><td>'+esc(h)+'</td><td>'+esc(l)+'</td>';$('#srcTable tbody').appendChild(tr)});
